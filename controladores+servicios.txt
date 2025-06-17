@@ -1,0 +1,51 @@
+# app/__init__.py
+from flask import Flask
+from models import Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from routes.noticias import noticias_bp
+
+def create_app():
+    app = Flask(__name__)
+    engine = create_engine('postgresql://usuario:pass@localhost/dbname')
+    Base.metadata.create_all(engine)
+    app.session = sessionmaker(bind=engine)()
+    app.register_blueprint(noticias_bp)
+    return app
+# routes/noticias.py
+from flask import Blueprint, request, jsonify, current_app
+from models import Noticia
+from sqlalchemy.orm import joinedload
+
+noticias_bp = Blueprint('noticias', __name__)
+
+@noticias_bp.route('/noticias', methods=['GET'])
+def get_noticias():
+    session = current_app.session
+    noticias = session.query(Noticia).options(joinedload('usuario'), joinedload('categoria')).all()
+    result = []
+    for n in noticias:
+        result.append({
+            'id': n.id,
+            'titulo': n.titulo,
+            'usuario': n.usuario.nombre,
+            'categoria': n.categoria.nombre,
+            'fecha': n.fecha_publicacion.isoformat()
+        })
+    return jsonify(result)
+
+@noticias_bp.route('/noticias', methods=['POST'])
+def create_noticia():
+    data = request.json
+    n = Noticia(
+        titulo=data['titulo'],
+        contenido=data['contenido'],
+        usuario_id=data['usuario_id'],
+        categoria_id=data['categoria_id']
+    )
+    session = current_app.session
+    session.add(n)
+    session.commit()
+    return jsonify({'id': n.id}), 201
+
+# Rutas PUT, DELETE, GET by id se pueden ampliar similarmente...

@@ -1,0 +1,54 @@
+# models.py
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table
+from sqlalchemy.orm import relationship, declarative_base
+from datetime import datetime
+
+Base = declarative_base()
+
+noticia_etiqueta = Table(
+    'noticia_etiqueta', Base.metadata,
+    Column('noticia_id', Integer, ForeignKey('noticia.id'), primary_key=True),
+    Column('etiqueta_id', Integer, ForeignKey('etiqueta.id'), primary_key=True)
+)
+
+class Usuario(Base):
+    __tablename__ = 'usuario'
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(100), nullable=False)
+    email = Column(String(100), unique=True, nullable=False)
+    noticias = relationship('Noticia', back_populates='usuario')
+    comentarios = relationship('Comentario', back_populates='usuario')
+
+class Categoria(Base):
+    __tablename__ = 'categoria'
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(50), nullable=False)
+
+class Noticia(Base):
+    __tablename__ = 'noticia'
+    id = Column(Integer, primary_key=True)
+    titulo = Column(String(200), nullable=False)
+    contenido = Column(Text, nullable=False)
+    fecha_publicacion = Column(DateTime, default=datetime.utcnow)
+    usuario_id = Column(Integer, ForeignKey('usuario.id'))
+    categoria_id = Column(Integer, ForeignKey('categoria.id'))
+    usuario = relationship('Usuario', back_populates='noticias')
+    categoria = relationship('Categoria')
+    comentarios = relationship('Comentario', back_populates='noticia')
+    etiquetas = relationship('Etiqueta', secondary=noticia_etiqueta, back_populates='noticias')
+
+class Comentario(Base):
+    __tablename__ = 'comentario'
+    id = Column(Integer, primary_key=True)
+    contenido = Column(Text, nullable=False)
+    fecha = Column(DateTime, default=datetime.utcnow)
+    usuario_id = Column(Integer, ForeignKey('usuario.id'))
+    noticia_id = Column(Integer, ForeignKey('noticia.id'))
+    usuario = relationship('Usuario', back_populates='comentarios')
+    noticia = relationship('Noticia', back_populates='comentarios')
+
+class Etiqueta(Base):
+    __tablename__ = 'etiqueta'
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(50), nullable=False)
+    noticias = relationship('Noticia', secondary=noticia_etiqueta, back_populates='etiquetas')

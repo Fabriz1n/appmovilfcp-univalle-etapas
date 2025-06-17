@@ -1,0 +1,41 @@
+CREATE TABLE usuario (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE categoria (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE noticia (
+    id SERIAL PRIMARY KEY,
+    titulo VARCHAR(200) NOT NULL,
+    contenido TEXT NOT NULL,
+    fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    usuario_id INTEGER NOT NULL REFERENCES usuario(id),
+    categoria_id INTEGER NOT NULL REFERENCES categoria(id)
+);
+
+CREATE TABLE comentario (
+    id SERIAL PRIMARY KEY,
+    contenido TEXT NOT NULL,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    usuario_id INTEGER NOT NULL REFERENCES usuario(id),
+    noticia_id INTEGER NOT NULL REFERENCES noticia(id)
+);
+
+CREATE TABLE etiqueta (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE noticia_etiqueta (
+    noticia_id INTEGER NOT NULL REFERENCES noticia(id),
+    etiqueta_id INTEGER NOT NULL REFERENCES etiqueta(id),
+    PRIMARY KEY (noticia_id, etiqueta_id)
+);
+
+CREATE INDEX idx_usuario_email ON usuario(email);
+CREATE INDEX idx_noticia_fecha ON noticia(fecha_publicacion);
